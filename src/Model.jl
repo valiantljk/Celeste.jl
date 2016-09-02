@@ -1,5 +1,7 @@
 module Model
 
+using FixedSizeArrays
+
 # parameter types
 export Image, TiledImage, ImageTile,
        SkyPatch, PsfComponent,
