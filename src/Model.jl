@@ -10,7 +10,7 @@ export Image, TiledImage, ImageTile,
        CanonicalParams, BrightnessParams, StarPosParams,
        GalaxyPosParams, GalaxyShapeParams,
        VariationalParams, FreeVariationalParams,
-       PsfParams, RawPSF, CatalogEntry,
+       PsfParams, CatalogEntry,
        init_source
 
 # functions
