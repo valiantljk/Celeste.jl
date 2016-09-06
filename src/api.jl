@@ -78,7 +78,8 @@ function divide_skyarea(box, nra, ndec, i)
 end
 
 
-@inline nputs(nid, s) = ccall(:puts, Cint, (Ptr{Int8},), string("[$nid] ", s))
+@inline nputs(nid, s) = ccall(:puts, Cint, (Cstring,), string("[$nid] ", s))
+@inline ntputs(nid, tid, s) = ccall(:puts, Cint, (Cstring,), string("[$nid]<$tid> ", s))
 @inline phalse(b) = b[] = false
 
 
