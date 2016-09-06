@@ -1204,18 +1204,18 @@ test_process_active_pixels()
 
 # KL tests:
 println("Running KL derivative tests.")
-@time test_beta_kl_derivatives()
-@time test_categorical_kl_derivatives()
-@time test_diagmvn_mvn_kl_derivatives()
-@time test_normal_kl_derivatives()
+test_beta_kl_derivatives()
+test_categorical_kl_derivatives()
+test_diagmvn_mvn_kl_derivatives()
+test_normal_kl_derivatives()
 
 # SensitiveFloat tests:
 println("Running SensitiveFloat derivative tests.")
-@time test_combine_sfs()
-@time test_add_sources_sf()
+test_combine_sfs()
+test_add_sources_sf()
 
 # Transform tests:
 println("Running Transform derivative tests.")
-@time test_box_derivatives()
-@time test_box_simplex_derivatives()
-@time test_simplex_derivatives()
+test_box_derivatives()
+test_box_simplex_derivatives()
+test_simplex_derivatives()

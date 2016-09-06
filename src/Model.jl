@@ -1,7 +1,5 @@
 module Model
 
-using FixedSizeArrays
-
 # parameter types
 export Image, TiledImage, ImageTile,
        SkyPatch, PsfComponent,
@@ -10,7 +8,7 @@ export Image, TiledImage, ImageTile,
        CanonicalParams, BrightnessParams, StarPosParams,
        GalaxyPosParams, GalaxyShapeParams,
        VariationalParams, FreeVariationalParams,
-       PsfParams, CatalogEntry,
+       PsfParams, RawPSF, CatalogEntry,
        init_source
 
 # functions

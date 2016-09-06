@@ -285,8 +285,6 @@ end
 # -----------------------------------------------------------------------------
 # PSF-related functions
 
-
-
 """
 psf(x, y)
 
@@ -312,8 +310,8 @@ function (psf::RawPSF)(x::Real, y::Real)
         # Note that the image coordinates and coefficients are intended
         # to be zero-indexed.
         w = 0.0
-        for j=1:psf.nrow_b, i=1:psf.ncol_b
-            w += (psf.cmat[k][i, j] *
+        for j=1:size(psf.cmat, 2), i=1:size(psf.cmat, 1)
+            w += (psf.cmat[i, j, k] *
                   (RCS * (x - 1.0))^(i-1) * (RCS * (y - 1.0))^(j-1))
         end
 
@@ -349,13 +347,20 @@ function read_psf(fitsfile::FITSIO.FITS, band::Char)
     cmat_raw = read(hdu, "c")::Array{Float32, 3}
     rrows_raw = read(hdu, "rrows")::Array{Array{Float32,1},1}
 
+    # Only the first (nrow_b, ncol_b) submatrix of cmat is used for
+    # reasons obscure to the author.
+    cmat = Array(Float64, nrow_b, ncol_b, size(cmat_raw, 3))
+    for k=1:size(cmat_raw, 3), j=1:nrow_b, i=1:ncol_b
+        cmat[i, j, k] = cmat_raw[i, j, k]
+    end
+
     # convert rrows to Array{Float64, 2}, assuming each row is the same length.
     rrows = Array(Float64, length(rrows_raw[1]), length(rrows_raw))
     for i=1:length(rrows_raw)
         rrows[:, i] = rrows_raw[i]
     end
 
-    return RawPSF(rrows, rnrow, rncol, convert(Array{Float64}, cmat_raw), nrow_b, ncol_b)
+    return RawPSF(rrows, rnrow, rncol, cmat)
 end
 
 
