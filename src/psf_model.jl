@@ -25,13 +25,12 @@ immutable PsfComponent
 
     tauBarInv::Matrix{Float64}
     tauBarLd::Float64
-
-    function PsfComponent(alphaBar::Float64, xiBar::Vector{Float64},
-                          tauBar::Matrix{Float64})
-        new(alphaBar, xiBar, tauBar, tauBar^-1, logdet(tauBar))
-    end
 end
 
+function PsfComponent(alphaBar::Float64, xiBar::Vector{Float64},
+                      tauBar::Matrix{Float64})
+    PsfComponent(alphaBar, xiBar, tauBar, tauBar^-1, logdet(tauBar))
+end
 
 function get_psf_width(psf::Array{PsfComponent}; width_scale=1.0)
     # A heuristic measure of the PSF width based on an anology
