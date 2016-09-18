@@ -22,6 +22,19 @@ const widec = 0.025
 
 
 """
+Inference result.
+"""
+immutable InferResult
+    thing_id::Int
+    objid::String
+    ra::Float64
+    dec::Float64
+    vs::Vector{Float64}
+    runtime::Float64
+end
+
+
+"""
 Timing information.
 """
 type InferTiming
@@ -38,7 +51,6 @@ type InferTiming
     InferTiming() = new(0.0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0.0, 0.0)
 end
 
-
 function add_timing!(i::InferTiming, j::InferTiming)
     i.query_fids = i.query_fids + j.query_fids
     i.num_infers = i.num_infers + j.num_infers
@@ -52,13 +64,15 @@ function add_timing!(i::InferTiming, j::InferTiming)
 end
 
 
+"""
+RA/DEC bounding box.
+"""
 immutable BoundingBox
     ramin::Float64
     ramax::Float64
     decmin::Float64
     decmax::Float64
 end
-
 
 """
 Given a BoundingBox that is to be divided into `nra` x `ndec` subareas,
@@ -171,7 +185,7 @@ function divide_sky_and_infer(
     end
 
     # create Dtree and get the initial allocation
-    dt, is_parent = DtreeScheduler(num_work_items, 0.4)
+    dt, is_parent = Dtree(num_work_items, 0.4)
     ni, (ci, li) = initwork(dt)
     rundt = Ref(runtree(dt))
     @inline function rundtree(again)
@@ -206,13 +220,13 @@ function divide_sky_and_infer(
         itimes.query_fids = toq()
 
         # run inference for this subarea
-        results = one_node_infer(rcfs, stagedir;
-                        box=BoundingBox(iramin, iramax, idecmin, idecmax),
+        results = one_node_infer(rcfs;
+                        box=box,
                         reserve_thread=rundt,
                         thread_fun=rundtree,
                         timing=itimes)
         tic()
-        save_results(outdir, iramin, iramax, idecmin, idecmax, results)
+        save_results(outdir, box, results)
         itimes.write_results = toq()
 
         timing.num_infers = timing.num_infers+1
@@ -264,7 +278,7 @@ fit the Celeste model to sources in a given bounding box.
 
 Returns:
 
-- Dictionary of results, keyed by SDSS thing_id.
+- Array of results
 """
 function one_node_infer(
                rcfs::Vector{RunCamcolField},
@@ -335,7 +349,7 @@ function one_node_infer(
     curr_source = 1
     last_source = length(target_sources)
     sources_lock = SpinLock()
-    results = Dict[]
+    results = Vector{InferResult}()
     results_lock = SpinLock()
     function process_sources()
         tid = threadid()
@@ -371,13 +385,8 @@ function one_node_infer(
 #                end
 
                 lock(results_lock)
-                push!(results, Dict(
-                    "thing_id"=>entry.thing_id,
-                    "objid"=>entry.objid,
-                    "ra"=>entry.pos[1],
-                    "dec"=>entry.pos[2],
-                    "vs"=>vs_opt,
-                    "runtime"=>runtime))
+                push!(results, InferResult(entry.thing_id, entry.objid,
+                                   entry.pos[1], entry.pos[2], vs_opt, runtime))
                 unlock(results_lock)
             end
         end
@@ -464,14 +473,12 @@ end
 """
 Save provided results to a JLD file.
 """
-function save_results(outdir, ramin, ramax, decmin, decmax, results)
-    fname = @sprintf("%s/celeste-%.4f-%.4f-%.4f-%.4f.jld",
-                     outdir, ramin, ramax, decmin, decmax)
+function save_results(outdir, box, results)
+    fname = @sprintf("%s/celeste-%.4f-%.4f-%.4f-%.4f-node%d.jld",
+                     outdir, box.ramin, box.ramax, box.decmin, box.decmax,
+                     nodeid)
     JLD.save(fname, "results", results)
 end
-
-save_results(outdir, box, results) =
-    save_results(outdir, box.ramin, box.ramax, box.decmin, box.decmax, results)
 
 
 """
