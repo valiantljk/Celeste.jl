@@ -21,6 +21,7 @@ function
 type ElboArgs{NumType <: Number}
     S::Int64
     N::Int64
+    psf_K::Int64
     images::Vector{TiledImage}
     vp::VariationalParams{NumType}
     tile_source_map::Vector{Matrix{Vector{Int}}}
@@ -34,13 +35,17 @@ function ElboArgs{NumType <: Number}(
             vp::VariationalParams{NumType},
             tile_source_map::Vector{Matrix{Vector{Int}}},
             patches::Matrix{SkyPatch},
-            active_sources::Vector{Int})
+            active_sources::Vector{Int},
+            psf_K::Int)
     N = length(images)
     S = length(vp)
+
+    @assert psf_K > 0
     @assert length(tile_source_map) == N
     @assert size(patches, 1) == S
     @assert size(patches, 2) == N
-    ElboArgs(S, N, images, vp, tile_source_map, patches, active_sources)
+    ElboArgs(S, N, default_psf_K, images, vp, tile_source_map, patches,
+             active_sources)
 end
 
 

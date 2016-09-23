@@ -26,8 +26,8 @@ function load_bvn_mixtures{NumType <: Number}(
                     calculate_derivs::Bool=true,
                     calculate_hessian::Bool=true)
 
-    star_mcs = Array(BvnComponent{NumType}, psf_K, ea.S)
-    gal_mcs = Array(GalaxyCacheComponent{NumType}, psf_K, 8, 2, ea.S)
+    star_mcs = Array(BvnComponent{NumType}, ea.psf_K, ea.S)
+    gal_mcs = Array(GalaxyCacheComponent{NumType}, ea.psf_K, 8, 2, ea.S)
 
     # TODO: do not keep any derviative information if the sources are not in
     # active_sources.
@@ -41,7 +41,7 @@ function load_bvn_mixtures{NumType <: Number}(
                                              ea.patches[s, b].pixel_center, world_loc)
 
         # Convolve the star locations with the PSF.
-        for k in 1:psf_K
+        for k in 1:ea.psf_K
             pc = psf[k]
             mean_s = [pc.xiBar[1] + m_pos[1], pc.xiBar[2] + m_pos[2]]
             star_mcs[k, s] =
@@ -56,7 +56,7 @@ function load_bvn_mixtures{NumType <: Number}(
 
             # Galaxies of type 1 have 8 components, and type 2 have 6 components.
             for j in 1:[8,6][i]
-                for k = 1:psf_K
+                for k = 1:ea.psf_K
                     gal_mcs[k, j, i, s] = GalaxyCacheComponent(
                         e_dev_dir, e_dev_i, galaxy_prototypes[i][j], psf[k],
                         m_pos, vs[ids.e_axis], vs[ids.e_angle], vs[ids.e_scale],
@@ -406,7 +406,7 @@ function populate_fsm_vecs!{NumType <: Number}(
         calculate_hessian =
             elbo_vars.calculate_hessian && elbo_vars.calculate_derivs && active_source
         clear!(elbo_vars.fs0m_vec[s], calculate_hessian)
-        for k = 1:psf_K # PSF component
+        for k = 1:ea.psf_K # PSF component
             accum_star_pos!(
                 elbo_vars, s, star_mcs[k, s], x, wcs_jacobian, active_source)
         end
@@ -416,7 +416,7 @@ function populate_fsm_vecs!{NumType <: Number}(
             for j in 1:8 # Galaxy component
                 # If i == 2 then there are only six galaxy components.
                 if (i == 1) || (j <= 6)
-                    for k = 1:psf_K # PSF component
+                    for k = 1:ea.psf_K # PSF component
                         accum_galaxy_pos!(
                             elbo_vars, s, gal_mcs[k, j, i, s], x, wcs_jacobian,
                             active_source)
@@ -998,4 +998,3 @@ function elbo{NumType <: Number}(
     subtract_kl!(ea, elbo, calculate_derivs=calculate_derivs)
     elbo
 end
-
