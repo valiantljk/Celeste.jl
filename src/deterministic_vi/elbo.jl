@@ -235,11 +235,15 @@ function accum_star_pos!{NumType <: Number}(
                     x::Vector{Float64},
                     wcs_jacobian::Array{Float64, 2},
                     calculate_derivs::Bool)
+
     eval_bvn_pdf!(elbo_vars.bvn_derivs, bmc, x)
 
     # TODO: Also make a version that doesn't calculate any derivatives
     # if the object isn't in active_sources.
-    get_bvn_derivs!(elbo_vars.bvn_derivs, bmc, true, false)
+    # TODO: why wasn't this easy before?
+    if elbo_vars.calculate_derivs && calculate_derivs
+        get_bvn_derivs!(elbo_vars.bvn_derivs, bmc, true, false)
+    end
 
     fs0m = elbo_vars.fs0m_vec[s]
     fs0m.v[1] += elbo_vars.bvn_derivs.f_pre[1]
