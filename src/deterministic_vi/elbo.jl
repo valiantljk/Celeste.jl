@@ -238,9 +238,6 @@ function accum_star_pos!{NumType <: Number}(
 
     eval_bvn_pdf!(elbo_vars.bvn_derivs, bmc, x)
 
-    # TODO: Also make a version that doesn't calculate any derivatives
-    # if the object isn't in active_sources.
-    # TODO: why wasn't this easy before?
     if elbo_vars.calculate_derivs && calculate_derivs
         get_bvn_derivs!(elbo_vars.bvn_derivs, bmc, true, false)
     end
@@ -400,6 +397,9 @@ function populate_fsm_vecs!{NumType <: Number}(
                     h::Int, w::Int,
                     gal_mcs::Array{GalaxyCacheComponent{NumType}, 4},
                     star_mcs::Array{BvnComponent{NumType}, 2})
+
+    # TODO: delete debugging code
+    kept0 = tossed0 = kept1 = tossed1 = 0
     x = Float64[tile.h_range[h], tile.w_range[w]]
     for s in tile_sources
         # ensure tile.b is a filter band, not an image's index
@@ -411,8 +411,13 @@ function populate_fsm_vecs!{NumType <: Number}(
             elbo_vars.calculate_hessian && elbo_vars.calculate_derivs && active_source
         clear!(elbo_vars.fs0m_vec[s], calculate_hessian)
         for k = 1:ea.psf_K # PSF component
-            accum_star_pos!(
-                elbo_vars, s, star_mcs[k, s], x, wcs_jacobian, active_source)
+            if check_point_close_to_bvn(star_mcs[k, s], x)
+                # kept0 += 1
+                accum_star_pos!(
+                    elbo_vars, s, star_mcs[k, s], x, wcs_jacobian, active_source)
+            # else
+                # tossed0 += 1
+            end
         end
 
         clear!(elbo_vars.fs1m_vec[s], calculate_hessian)
@@ -421,14 +426,22 @@ function populate_fsm_vecs!{NumType <: Number}(
                 # If i == 2 then there are only six galaxy components.
                 if (i == 1) || (j <= 6)
                     for k = 1:ea.psf_K # PSF component
-                        accum_galaxy_pos!(
-                            elbo_vars, s, gal_mcs[k, j, i, s], x, wcs_jacobian,
-                            active_source)
+                        if check_point_close_to_bvn(gal_mcs[k, j, i, s].bmc, x)
+                            accum_galaxy_pos!(
+                                elbo_vars, s, gal_mcs[k, j, i, s], x, wcs_jacobian,
+                                active_source)
+                            # kept1 += 1
+                        # else
+                            # tossed1 += 1
+                        end
                     end
                 end
             end
         end
     end
+    # if (tossed0 + tossed1 > 0)
+    #     println("fsm vec: ", kept0, " ", tossed0, " ", kept1, " ", tossed1)
+    # end
 end
 
 
