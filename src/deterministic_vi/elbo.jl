@@ -830,7 +830,6 @@ function process_active_pixels!{NumType <: Number}(
     gal_mcs_vec = Array(Array{GalaxyCacheComponent{NumType}, 4}, ea.N)
 
     for b=1:ea.N
-        # TODO: every elbo_vars should not get to decide its own calculate_*
         star_mcs_vec[b], gal_mcs_vec[b] =
             load_bvn_mixtures(ea, b,
                 calculate_derivs=elbo_vars.calculate_derivs,
